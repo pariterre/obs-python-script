@@ -37,6 +37,7 @@ def main():
         # Ensure for proper disconnection from the IRC server
         pomo.end_session()
         pomo.clear_database()
+        pomo.save_database()
 
 
 if __name__ == "__main__":

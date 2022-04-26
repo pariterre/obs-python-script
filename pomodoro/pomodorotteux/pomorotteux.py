@@ -57,7 +57,7 @@ class Pomodorotteux:
             self.number_tomatoes_done[name] += 1
 
         self._score_update_callback(self.number_tomatoes_done)
-        self._save_database()
+        self.save_database()
 
     def end_session(self):
         self._connected_users = {}
@@ -90,7 +90,7 @@ class Pomodorotteux:
             self._has_connected_callback(name, self.number_tomatoes_done)
             self._score_update_callback(self.number_tomatoes_done)
 
-            self._save_database()
+            self.save_database()
 
     def _read_database(self):
         dir_path = os.path.dirname(self._config.database_path)
@@ -108,7 +108,7 @@ class Pomodorotteux:
         with open(self._config.database_path + ".bak", "wb") as file:
             pickle.dump(self.number_tomatoes_done, file)
 
-    def _save_database(self):
+    def save_database(self):
         with open(self._config.database_path, "wb") as file:
             pickle.dump(self.number_tomatoes_done, file)
 
