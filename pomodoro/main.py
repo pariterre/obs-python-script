@@ -30,7 +30,7 @@ def main():
 
     try:
         while True:
-            time.sleep(10)
+            time.sleep(3)
             print("Tomate faite!")
             pomo.add_tomato_to_connected_users()
     finally:

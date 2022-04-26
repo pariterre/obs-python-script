@@ -119,12 +119,12 @@ class Pomodorotteux:
     def _twitch_irc_connection(self):
         self._irc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._irc_socket.connect((self._config.irc_server_address, self._config.irc_port))
+        self._connexion_initialized = True
         self._irc_send_data(f"PASS {self._config.oauth_key}")
         self._irc_send_data(f"NICK {self._config.nickname}")
         self._irc_send_data(f"JOIN #{self._config.channel_name}")
 
         _thread.start_new_thread(self._twitch_callback, ())
-        self._connexion_initialized = True
 
     def _twitch_callback(self):
         while self._keep_twitch_connection_alive:
