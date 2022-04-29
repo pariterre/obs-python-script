@@ -111,7 +111,7 @@ class Pomodorotteux:
             pickle.dump(self.number_tomatoes_done, file)
 
     def _irc_send_data(self, command):
-        if self._connexion_initialized:
+        if self._connexion_initialized and self._keep_twitch_connection_alive:
             self._irc_socket.send((command + "\n").encode())
 
     def _twitch_irc_connection(self):
