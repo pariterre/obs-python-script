@@ -80,17 +80,15 @@ class Pomodorotteux:
                     self._disconnect_user_callback(user)
 
     def _connect_user(self, name):
-        is_new_user = name not in self._connected_users
-
-        # Reset the time for all (even connected user)
+        # Set the time for the user to now
         self._connected_users[name] = time.time()
 
-        if is_new_user:
+        if name not in self.number_tomatoes_done:
             self.number_tomatoes_done[name] = 0
-            self._has_connected_callback(name, self.number_tomatoes_done)
-            self._score_update_callback(self.number_tomatoes_done)
+        self._has_connected_callback(name, self.number_tomatoes_done)
+        self._score_update_callback(self.number_tomatoes_done)
 
-            self.save_database()
+        self.save_database()
 
     def _read_database(self):
         dir_path = os.path.dirname(self._config.database_path)
