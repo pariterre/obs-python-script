@@ -15,8 +15,9 @@ def main():
     def disconnect_user_callback(name: str):
         pomo.post_message(f"Message de la tomate : {name} a été bien silencieux(se)! Tu es toujours là?")
 
-    def score_callback(score: dict):
+    def score_callback(score: dict, connected_users: dict):
         print(score)
+        print(f"Total de tomates aujourd'hui: {sum(score[user] for user in connected_users)}")
 
     pomo = Pomodorotteux(
         config=TwitchConfiguration.load_configuration("my_config_file.key"),

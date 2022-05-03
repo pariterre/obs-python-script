@@ -44,7 +44,7 @@ class Pomodorotteux:
         # Database information
         self._connected_users = {}
         self._read_database()
-        self._score_update_callback(self.number_tomatoes_done)
+        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
 
         # Twitch information
         self._twitch_irc_connection()
@@ -56,7 +56,7 @@ class Pomodorotteux:
         for name in self._connected_users:
             self.number_tomatoes_done[name] += 1
 
-        self._score_update_callback(self.number_tomatoes_done)
+        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
         self.save_database()
 
     def end_session(self):
@@ -86,7 +86,7 @@ class Pomodorotteux:
         if name not in self.number_tomatoes_done:
             self.number_tomatoes_done[name] = 0
         self._has_connected_callback(name, self.number_tomatoes_done)
-        self._score_update_callback(self.number_tomatoes_done)
+        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
 
         self.save_database()
 
