@@ -1,33 +1,26 @@
 import time
-from typing import Callable
-import os
 import socket
 import re
 import _thread
-import pickle
 
 from .configuration import TwitchConfigurationInternal
+from .pomodoro_user import PomodoroUsers
+from .pomodoro_callbacks import PomodoroCallbacks
 
 
 class Pomodorotteux:
     _config: TwitchConfigurationInternal
 
     _ping_time: float
-    _has_connected_callback: Callable
-    _disconnect_user_callback: Callable
-    _score_update_callback: Callable
     _irc_socket: socket
     _connexion_initialized: bool = False
 
-    number_tomatoes_done: dict
-    _connected_users: dict
+    _users: PomodoroUsers
 
     def __init__(
         self,
         config: TwitchConfigurationInternal,
-        has_connected_callback: Callable,
-        disconnect_user_callback: Callable,
-        score_update_callback: Callable,
+        callbacks: PomodoroCallbacks,
         ping_time: float = -1,
     ):
         self._config = config
@@ -37,14 +30,10 @@ class Pomodorotteux:
         self._ping_time = ping_time
         if self._ping_time > 0:
             _thread.start_new_thread(self._ping_connected_users, ())
-        self._has_connected_callback = has_connected_callback
-        self._disconnect_user_callback = disconnect_user_callback
-        self._score_update_callback = score_update_callback
+        self._callbacks = callbacks
 
         # Database information
-        self._connected_users = {}
-        self._read_database()
-        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
+        self._users = PomodoroUsers.load_database(self._config, self._callbacks)
 
         # Twitch information
         self._twitch_irc_connection()
@@ -52,66 +41,31 @@ class Pomodorotteux:
     def __del__(self):
         self._irc_send_data(f"PART {self._config.channel_name}")
 
-    def add_tomato_to_connected_users(self):
-        for name in self._connected_users:
-            self.number_tomatoes_done[name] += 1
-
-        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
-        self.save_database()
+    def save_database(self):
+        self._users.save_database(self._config)
 
     def end_session(self):
-        self._connected_users = {}
-        self._irc_send_data(f"PART {self._config.channel_name}")
+        self._users.disconnect_all_users()
         self._keep_twitch_connection_alive = False
+        self._irc_send_data(f"PART {self._config.channel_name}", bypass_keep_alive=True)
 
     def clear_database(self):
-        self.number_tomatoes_done = {}
+        self._users.clear_database()
 
     def post_message(self, message):
         self._irc_send_data(f"PRIVMSG #{self._config.channel_name} :{message}")
 
+    def add_tomato_to_connected_users(self):
+        self._users.add_tomato_to_connected_users(self._config, self._callbacks)
+
     def _ping_connected_users(self):
         while self._keep_twitch_connection_alive:
             time.sleep(60)
-            current_time = time.time()
-            for user in list(self._connected_users.keys()):
-                if current_time - self._connected_users[user] > self._ping_time:
-                    del self._connected_users[user]
-                    self._disconnect_user_callback(user)
+            self._users.check_if_users_are_alive(self._ping_time, self._callbacks)
 
-    def _connect_user(self, name):
-        # Set the time for the user to now
-        self._connected_users[name] = time.time()
-
-        if name not in self.number_tomatoes_done:
-            self.number_tomatoes_done[name] = 0
-        self._has_connected_callback(name, self.number_tomatoes_done)
-        self._score_update_callback(self.number_tomatoes_done, self._connected_users)
-
-        self.save_database()
-
-    def _read_database(self):
-        dir_path = os.path.dirname(self._config.database_path)
-        if not os.path.exists(dir_path):
-            os.mkdir(dir_path)
-
-        if not os.path.exists(self._config.database_path):
-            self.number_tomatoes_done = {}
-            return
-
-        with open(self._config.database_path, "rb") as file:
-            self.number_tomatoes_done = pickle.load(file)
-
-        # Do a backup of the database just to make sure
-        with open(self._config.database_path + ".bak", "wb") as file:
-            pickle.dump(self.number_tomatoes_done, file)
-
-    def save_database(self):
-        with open(self._config.database_path, "wb") as file:
-            pickle.dump(self.number_tomatoes_done, file)
-
-    def _irc_send_data(self, command):
-        if self._connexion_initialized and self._keep_twitch_connection_alive:
+    def _irc_send_data(self, command, bypass_keep_alive: bool = False):
+        # The bypass is a kind of mutex
+        if self._connexion_initialized and self._keep_twitch_connection_alive or bypass_keep_alive:
             self._irc_socket.send((command + "\n").encode())
 
     def _twitch_irc_connection(self):
@@ -149,7 +103,7 @@ class Pomodorotteux:
 
                 # If it is a message, register the user if needed
                 if sender_name:
-                    self._connect_user(sender_name)
+                    self._users.declare_user_interaction(sender_name, self._config, self._callbacks)
 
     def __str__(self):
-        return str(self.number_tomatoes_done)
+        return str(self._users)
