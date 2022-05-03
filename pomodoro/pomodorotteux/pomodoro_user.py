@@ -37,7 +37,7 @@ class PomodoroUser:
 
 
 class PomodoroUsers:
-    _users: dict[str, PomodoroUser]
+    _users: dict
 
     def __init__(self):
         self._users = {}
@@ -77,7 +77,7 @@ class PomodoroUsers:
 
     def declare_user_interaction(self, name, config: TwitchConfigurationInternal, callbacks: PomodoroCallbacks):
         if name not in list(self._users.keys()):
-            self._users[name] = PomodoroUser()
+            self._users[name] = PomodoroUser(_pseudo=name)
 
         if not self._users[name].is_connected:
             self._users[name].is_connected = True

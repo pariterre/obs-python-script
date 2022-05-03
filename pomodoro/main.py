@@ -17,7 +17,8 @@ def main():
 
     def score_callback(users: dict):
         for name in users:
-            print(f"{users[name].pseudo} a fait : {users[name].number_of_tomato_done} pour un total de {users[name].total_number_of_tomatoes}")
+            print(f"{users[name].pseudo} a fait : {users[name].number_of_tomato_done} "
+                  f"pour un total de {users[name].total_number_of_tomatoes}")
         print(f"Total de tomates aujourd'hui: {sum(users[name].number_of_tomato_done for name in users)}")
         print("")
 

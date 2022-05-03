@@ -28,8 +28,6 @@ class Pomodorotteux:
         # If this should be completely ignored or not
         self._keep_twitch_connection_alive = True
         self._ping_time = ping_time
-        if self._ping_time > 0:
-            _thread.start_new_thread(self._ping_connected_users, ())
         self._callbacks = callbacks
 
         # Database information
@@ -37,6 +35,9 @@ class Pomodorotteux:
 
         # Twitch information
         self._twitch_irc_connection()
+
+        if self._ping_time > 0:
+            _thread.start_new_thread(self._ping_connected_users, ())
 
     def __del__(self):
         self._irc_send_data(f"PART {self._config.channel_name}")
